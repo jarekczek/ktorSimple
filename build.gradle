@@ -29,8 +29,15 @@ jar { // java plugin
       "Manifest-Version": "1.0",
       "Main-Class": "WwwServerKt",
       "Class-Path": configurations.compile.files
-        .collect { "file:///" + it.toString() }.join(" ")
+        .collect { it.getName() }.join(" ")
     )
+  }
+
+  doLast {
+    copy {
+	  from configurations.compile.files
+	  into 'build/deps'
+	}
   }
 }
 
