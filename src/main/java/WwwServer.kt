@@ -21,6 +21,9 @@ fun main(args: Array<String>) {
       get("/") {
         call.respondText("Hello, module world 8081!", ContentType.Text.Html)
       }
+      get("/ssl") {
+        call.respondText("ssl")
+      }
     }
   }
 
@@ -35,12 +38,11 @@ fun main(args: Array<String>) {
     }
     sslConnector(
       keyStore,
-      "keyali",
+      "localhost",
       { "changeit".toCharArray() },
       { "changeit".toCharArray() },
       {
         port = 8081
-        keyAlias = "server"
       }
     )
     modules.add(module)
