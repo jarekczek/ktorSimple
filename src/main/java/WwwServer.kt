@@ -1,7 +1,9 @@
+import htmlbuilder.htmlBuilderRoutes
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.call
+import io.ktor.html.respondHtml
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.pipeline.PipelinePhase
@@ -18,6 +20,9 @@ import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
 import io.ktor.util.decodeBase64
 import io.ktor.util.encodeBase64
+import kotlinx.html.body
+import kotlinx.html.head
+import kotlinx.html.title
 import org.ietf.jgss.GSSCredential
 import org.ietf.jgss.GSSManager
 import org.ietf.jgss.GSSName
@@ -37,8 +42,16 @@ fun main(args: Array<String>) {
     }
     routing {
       get("/") {
-        call.respondText("Hello, module world 8081!", ContentType.Text.Html)
+        val sb = StringBuilder()
+        sb.appendln("<h1>Hello, module world 8081!</h1>")
+        sb.appendln("<br/>")
+        sb.appendln("<a href='/menu'>menu</a>")
+        call.respondText(sb.toString(), ContentType.Text.Html)
       }
+      get("/p1") {
+        call.respondText("This is page 1.")
+      }
+      htmlBuilderRoutes()
       get("/spnego") {
         //https://tuhrig.de/a-windows-sso-for-java-on-client-and-server/
         var identity: String? = null
@@ -100,8 +113,10 @@ val server = embeddedServer(Netty, env)
 println("starting server")
 server.start(wait = false)
 println("server started")
+Runtime.getRuntime().exec("c:\\program_files\\espeak\\command_line\\espeak.exe -s 300 server")
 Thread.sleep(10*1000)
 //println("stoping server")
 //server.stop(1, 1, TimeUnit.SECONDS)
 //println("server stoped")
 }
+
