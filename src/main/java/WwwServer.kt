@@ -1,3 +1,5 @@
+import auth.IwaJnaAuth
+import auth.interceptAndAuthenticateIWA
 import htmlbuilder.htmlBuilderRoutes
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
@@ -40,6 +42,9 @@ fun main(args: Array<String>) {
     intercept(ApplicationCallPipeline.Call) {
       context.request.headers["Authorization"]?.let { println("authorization header: $it") }
     }
+
+    interceptAndAuthenticateIWA()
+
     routing {
       get("/") {
         val sb = StringBuilder()
@@ -56,7 +61,7 @@ fun main(args: Array<String>) {
         //https://tuhrig.de/a-windows-sso-for-java-on-client-and-server/
         var identity: String? = null
         val authNegHeader = context.request.headers["Authorization"]?.replace("Negotiate ", "")
-        println("authNegHeader: $authNegHeader")
+        //println("authNegHeader: $authNegHeader")
         val authNegHeaderBytes = try {
           authNegHeader?.let { decodeBase64(it) }
         } catch(e: Exception) {
@@ -71,8 +76,12 @@ fun main(args: Array<String>) {
           val backToken = negResult.second
           identity = negResult.first
           backToken?.let { context.response.headers.append("WWW-Authenticate", "Negotiate " + encodeBase64(backToken)) }
-          if (identity == null)
-            println("requiring to continue authentication")
+          if (identity == null) {
+            if (backToken != null)
+              println("requiring to continue authentication")
+            else
+              println("authentication failed")
+          }
           else
             println("successfully authenticated $identity")
         }
