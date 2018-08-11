@@ -106,6 +106,15 @@ val env = applicationEngineEnvironment {
   connector {
     port = 8080
   }
+  try {
+    val herokuPort = Integer.parseInt(System.getenv("PORT"))
+    println("heroku port: $herokuPort")
+    connector {
+      port = herokuPort
+    }
+  } catch(e: Exception) {
+    println("no heroku port given in PORT env")
+  }
   sslConnector(
     keyStore,
     "localhost",
@@ -122,7 +131,9 @@ val server = embeddedServer(Netty, env)
 println("starting server")
 server.start(wait = false)
 println("server started")
-Runtime.getRuntime().exec("c:\\program_files\\espeak\\command_line\\espeak.exe -s 300 server")
+try {
+  Runtime.getRuntime().exec("c:\\program_files\\espeak\\command_line\\espeak.exe -s 300 server")
+} catch (e: Exception) {}
 Thread.sleep(10*1000)
 //println("stoping server")
 //server.stop(1, 1, TimeUnit.SECONDS)

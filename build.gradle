@@ -40,9 +40,11 @@ jar { // java plugin
 
   doLast {
     copy {
-	  from configurations.compile.files
-	  into 'build/deps'
-	}
+	    from configurations.compile.files
+	    into 'build/deps'
+	  }
+    println archivePath
+    println archiveName
   }
 }
 
@@ -50,4 +52,19 @@ task run (type:JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   main = 'WwwServerKt'
   //jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=7778"
+}
+
+task stage(dependsOn: ['jar']) {
+  doLast {
+    println "jar built to " + tasks.jar.archivePath
+    copy {
+      from tasks.jar.archivePath
+      into 'build/libs'
+      rename { 'ktorSimple.jar' }
+    }
+    copy {
+  	  from configurations.compile.files
+	    into 'build/libs'
+	  }
+  }
 }
