@@ -1,16 +1,10 @@
-import auth.IwaJnaAuth
 import auth.interceptAndAuthenticateIWA
 import htmlbuilder.htmlBuilderRoutes
 import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.call
-import io.ktor.html.respondHtml
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.pipeline.PipelinePhase
-import io.ktor.response.ApplicationResponse
-import io.ktor.response.respond
 import io.ktor.response.respondText
 import io.ktor.response.respondWrite
 import io.ktor.routing.get
@@ -22,18 +16,7 @@ import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
 import io.ktor.util.decodeBase64
 import io.ktor.util.encodeBase64
-import kotlinx.html.body
-import kotlinx.html.head
-import kotlinx.html.title
-import org.ietf.jgss.GSSCredential
-import org.ietf.jgss.GSSManager
-import org.ietf.jgss.GSSName
-import org.ietf.jgss.Oid
-import sun.security.jgss.GSSHeader
-import waffle.windows.auth.impl.WindowsAuthProviderImpl
-import waffle.windows.auth.impl.WindowsSecurityContextImpl
 import java.security.KeyStore
-import javax.security.auth.login.LoginContext
 
 fun main(args: Array<String>) {
   class DummyClass {}
@@ -125,6 +108,7 @@ val env = applicationEngineEnvironment {
     }
   )
   modules.add(module)
+  modules.add(Application::eventsModule)
 }
 
 val server = embeddedServer(Netty, env)
