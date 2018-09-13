@@ -1,10 +1,25 @@
 import auth.interceptAndAuthenticateIWA
+import com.auth0.jwt.JWT
 import htmlbuilder.htmlBuilderRoutes
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.call
+import io.ktor.application.install
+import io.ktor.auth.Authentication
+import io.ktor.auth.AuthenticationFailedCause
+import io.ktor.auth.OAuthAccessTokenResponse
+import io.ktor.auth.OAuthServerSettings
+import io.ktor.auth.authenticate
+import io.ktor.auth.authentication
+import io.ktor.auth.jwt.JWTPrincipal
+import io.ktor.auth.oauth
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.apache.Apache
+import io.ktor.html.each
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
 import io.ktor.response.respondWrite
 import io.ktor.routing.get
@@ -27,6 +42,23 @@ fun main(args: Array<String>) {
     }
 
     interceptAndAuthenticateIWA()
+
+    install(Authentication) {
+      oauth {
+        client = HttpClient(Apache)
+        providerLookup = {
+          OAuthServerSettings.OAuth2ServerSettings(
+            name = "ooo1",
+            authorizeUrl = "http://localhost:8080/auth/realms/r1/protocol/openid-connect/auth",
+            accessTokenUrl = "http://localhost:8080/auth/realms/r1/protocol/openid-connect/token",
+            clientId = "ktorSimple",
+            clientSecret = "ppppsdfas",
+            requestMethod = HttpMethod.Post
+          )
+        }
+        urlProvider = { "http://localhost:8089/o2/success" }
+      }
+    }
 
     routing {
       get("/") {
@@ -77,6 +109,40 @@ fun main(args: Array<String>) {
       get("/ssl") {
         call.respondText("ssl")
       }
+
+      authenticate() {
+        handle {
+          println("principal: " + call.authentication.principal<OAuthAccessTokenResponse>())
+        }
+        get("/o2") {
+          call.respondText("oauth2 ok")
+        }
+        get("/o2/success") {
+          val sb = StringBuilder()
+          call.authentication.errors.forEach {
+            val err = it.value
+            sb.appendln("error: " + it.key + ", " + if (err is AuthenticationFailedCause.Error) "" + err.cause else "" + err)
+          }
+          val principal = call.authentication.principal<OAuthAccessTokenResponse.OAuth2>()
+          sb.appendln("o2success " + principal)
+          if (principal != null) {
+            principal?.extraParameters?.forEach { s, list ->
+              sb.appendln("principal: " + s + ", " + list.joinToString(", "))
+            }
+            val jwt = JWT.decode(principal?.accessToken)
+            jwt?.claims?.forEach { t, u -> sb.appendln("claim $t: ${u.asString()}") }
+            sb.appendln(jwt.header)
+          }
+          call.respondText(sb.toString())
+        }
+      }
+      get("/o2/authorize") {
+        //call.respondText("authorize to " + call.parameters.getAll("redirect_uri"))
+        call.respondRedirect(call.parameters.get("redirect_uri")!!)
+      }
+      get("/o2/token") {
+        call.respondText("token")
+      }
     }
   }
 
@@ -87,7 +153,7 @@ println("keystore aliases: " + keyStore.aliases().toList().joinToString(","))
 
 val env = applicationEngineEnvironment {
   connector {
-    port = 8080
+    port = 8089
   }
   try {
     val herokuPort = Integer.parseInt(System.getenv("PORT"))
